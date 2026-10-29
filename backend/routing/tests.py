@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from rest_framework.test import APIClient
 from .geometry import MILE, checkpoints
 from .providers import sample
@@ -41,6 +41,23 @@ class CalculationTests(SimpleTestCase):
 
 
 class ApiTests(SimpleTestCase):
+    @override_settings(CORS_ALLOWED_ORIGINS=['https://weather-aware-truck-routing.vercel.app'])
+    def test_health_and_restricted_cors(self):
+        client = APIClient()
+        self.assertEqual(client.get('/api/health/').json(), {'status': 'ok'})
+        allowed = client.options(
+            '/api/plan/',
+            HTTP_ORIGIN='https://weather-aware-truck-routing.vercel.app',
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD='POST',
+        )
+        self.assertEqual(allowed['Access-Control-Allow-Origin'], 'https://weather-aware-truck-routing.vercel.app')
+        blocked = client.options(
+            '/api/plan/',
+            HTTP_ORIGIN='https://unapproved.example',
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD='POST',
+        )
+        self.assertNotIn('Access-Control-Allow-Origin', blocked)
+
     def test_plan_returns_real_route_and_recommendation(self):
         departure = datetime.now(timezone.utc) + timedelta(hours=2)
         geometry = [[0, 0], [1, 0], [2, 0]]

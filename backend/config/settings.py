@@ -20,13 +20,16 @@ CSRF_COOKIE_SECURE = not DEBUG
 SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_HSTS_SECONDS', '0'))
 if os.getenv('DJANGO_TRUST_PROXY_SSL_HEADER') == '1':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-INSTALLED_APPS = ['rest_framework', 'routing']
+INSTALLED_APPS = ['corsheaders', 'rest_framework', 'routing']
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+CORS_ALLOWED_ORIGINS = [origin.strip().rstrip('/') for origin in os.getenv('DJANGO_CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()]
+CORS_URLS_REGEX = r'^/api/'
 ROOT_URLCONF = 'config.urls'
 TEMPLATES = []
 WSGI_APPLICATION = 'config.wsgi.application'

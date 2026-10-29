@@ -1,12 +1,13 @@
 import type { Coord, Corridor, Plan } from './types'
 const TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string | undefined
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined || '').replace(/\/$/, '')
 export const mapboxToken = TOKEN || ''
 
 async function post<T>(path: string, body: unknown, signal: AbortSignal): Promise<T> {
   let response: Response
   const timeout = AbortSignal.timeout(120000)
-  try { response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.any([signal, timeout]) }) }
-  catch (error) { if (signal.aborted) throw error; if (timeout.aborted) throw new Error('The routing request timed out. Please retry.'); throw new Error('Cannot reach the routing server. Check that Django is running on port 8000.') }
+  try { response = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.any([signal, timeout]) }) }
+  catch (error) { if (signal.aborted) throw error; if (timeout.aborted) throw new Error('The routing request timed out. Please retry.'); throw new Error('Cannot reach the routing server. Check your connection and API deployment.') }
   let data: { error?: string }
   try { data = await response.json() } catch { throw new Error(`The server returned an invalid response (${response.status}).`) }
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`)
